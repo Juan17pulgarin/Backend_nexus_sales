@@ -1,0 +1,43 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: nexus-sales-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+      - ./AdventureWorksLT2022.bak:/var/opt/mssql/backup/AdventureWorksLT2022.bak:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$SA_PASSWORD" -Q "SELECT 1" || /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$$SA_PASSWORD" -Q "SELECT 1"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: nexus-sales-sqlserver-init
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    environment:
+      SA_PASSWORD: "YourStrong!Passw0rd"
+      MSSQL_HOST: "sqlserver"
+      MSSQL_PORT: "1433"
+      DATABASE_NAME: "AdventureWorksLT2022"
+      BACKUP_FILE: "/var/opt/mssql/backup/AdventureWorksLT2022.bak"
+    volumes:
+      - ./AdventureWorksLT2022.bak:/var/opt/mssql/backup/AdventureWorksLT2022.bak:ro
+      - ./docker/sqlserver/restore-adventureworks.sh:/scripts/restore-adventureworks.sh:ro
+    entrypoint: ["/bin/bash", "/scripts/restore-adventureworks.sh"]
+    restart: "no"
+
+volumes:
+  mssql_data:
