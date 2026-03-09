@@ -81,7 +81,7 @@ class ClienteController extends Controller
         if (!$inserted) {
             $errorId = (string) Str::uuid();
 
-            Log::error('Insert devolvio false al registrar cliente en SalesLT.Customer', [
+            Log::error('Insert devolvió false al registrar cliente en SalesLT.Customer', [
                 'error_id' => $errorId,
                 'connection' => DB::getDefaultConnection(),
                 'table' => 'SalesLT.Customer',
