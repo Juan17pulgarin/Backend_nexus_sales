@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -41,30 +41,5 @@ class AuthController extends Controller
             'message' => 'Login exitoso',
             'token' => $token,
         ], 200);
-    }
-
-    public function clientes(Request $request)
-    {
-        $auth = $request->header('Authorization', '');
-
-        // Espera: Authorization: Bearer <token>
-        if (!preg_match('/^Bearer\s+(\S+)$/', $auth, $m)) {
-            return response()->json(['message' => 'No autorizado'], 401);
-        }
-
-        $token = $m[1];
-
-        if (!Cache::has('auth_token:' . $token)) {
-            return response()->json(['message' => 'No autorizado'], 401);
-        }
-
-        // Listado de clientes (ejemplo)
-        $clientes = DB::table('SalesLT.Customer')
-            ->select('CustomerID', 'FirstName', 'LastName', 'EmailAddress')
-            ->orderBy('CustomerID')
-            ->take(20)
-            ->get();
-
-        return response()->json($clientes, 200);
     }
 }
