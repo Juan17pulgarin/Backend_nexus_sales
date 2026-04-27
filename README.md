@@ -57,3 +57,56 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Quickstart (local development)
+
+Run these commands from the project root (`Backend_nexus_sales`):
+
+```bash
+# Install PHP dependencies
+composer install
+
+# Copy env and generate app key
+cp .env.example .env
+php artisan key:generate
+
+# If using SQLite (recommended for local dev)
+touch database/database.sqlite
+# Make sure .env contains: DB_CONNECTION=sqlite and DB_DATABASE=database/database.sqlite
+
+# Run migrations and seeders
+php artisan migrate --seed
+
+# Start the Laravel dev server on port 8000
+php artisan serve --port=8000
+```
+
+Test user (credenciales de ejemplo)
+
+- Email: `test@example.com`
+- Password: `password`
+
+Si el usuario de prueba no tiene contraseña (dependiendo del seeder), crea o actualiza la cuenta con este comando:
+
+```bash
+php artisan tinker --execute "\App\Models\User::updateOrCreate(['email' => 'test@example.com'], ['name' => 'Test User', 'password' => bcrypt('password')]);"
+```
+
+Probar login (ejemplo curl):
+
+```bash
+curl -s -X POST http://127.0.0.1:8000/api/login \
+	-H 'Content-Type: application/json' \
+	-d '{"email":"test@example.com","password":"password"}'
+```
+
+La respuesta contendrá el token Sanctum en la propiedad `token`. Incluye ese token en peticiones protegidas con el header:
+
+```
+Authorization: Bearer <token>
+```
+
+Notas:
+- Ajusta `DB_*` en `.env` según tu entorno (MySQL, SQLite, etc.).
+- Si necesitas compilar assets del backend (opcional), instala Node y corre `npm install` y `npm run dev` desde la raíz.
+
