@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
@@ -101,5 +102,42 @@ class AuthController extends Controller
                 'total' => $total,
             ],
         ], 200);
+    }
+
+    public function store(Request $request)
+    {
+        $auth = $request->header('Authorization', '');
+
+        // Espera: Authorization: Bearer <token>
+        if (!preg_match('/^Bearer\s+(\S+)$/', $auth, $m)) {
+            return response()->json(['message' => 'No autorizado'], 401);
+        }
+
+        $token = $m[1];
+
+        if (!Cache::has('auth_token:' . $token)) {
+            return response()->json(['message' => 'No autorizado'], 401);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255',
+            'last_name' => 'sometimes|nullable|string|max:255',
+        ]);
+
+        $nameParts = preg_split('/\s+/', trim($validated['name']));
+        $firstName = array_shift($nameParts) ?? $validated['name'];
+        $inferredLastName = count($nameParts) > 0 ? implode(' ', $nameParts) : null;
+
+        $customer = Customer::create([
+            'first_name' => $firstName,
+            'last_name' => $validated['last_name'] ?? $inferredLastName,
+            'email' => $validated['email'],
+        ]);
+
+        return response()->json([
+            'message' => 'Cliente creado correctamente',
+            'data' => $customer,
+        ], 201);
     }
 }
