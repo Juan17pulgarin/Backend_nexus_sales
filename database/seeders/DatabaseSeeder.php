@@ -22,7 +22,8 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        // Seed sample orders for local testing
+            // Seed sample orders and customers for local testing
+        $this->call(\Database\Seeders\CustomerSeeder::class);
         $this->call(\Database\Seeders\SalesOrderHeaderSeeder::class);
     }
 }

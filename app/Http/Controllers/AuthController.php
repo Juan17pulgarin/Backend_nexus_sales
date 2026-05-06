@@ -58,13 +58,48 @@ class AuthController extends Controller
             return response()->json(['message' => 'No autorizado'], 401);
         }
 
-        // Listado de clientes (ejemplo)
-        $clientes = DB::table('SalesLT.Customer')
-            ->select('CustomerID', 'FirstName', 'LastName', 'EmailAddress')
-            ->orderBy('CustomerID')
-            ->take(20)
-            ->get();
+        // Build query joining customers with customer_addresses
+        $qb = DB::table('customers')
+            ->leftJoin('customer_addresses', 'customers.id', '=', 'customer_addresses.customer_id')
+            ->select('customers.id as id', 'customers.first_name', 'customers.last_name', 'customers.email')
+            ->distinct()
+            ->orderBy('customers.id');
 
-        return response()->json($clientes, 200);
+        if ($request->filled('city')) {
+            $qb->where('customer_addresses.city', $request->query('city'));
+        }
+
+        if ($request->filled('state')) {
+            $qb->where('customer_addresses.state', $request->query('state'));
+        }
+
+        $page = max(1, (int) $request->query('page', 1));
+        $limit = max(1, (int) $request->query('limit', 10));
+        $offset = ($page - 1) * $limit;
+
+        // total distinct customers matching filters
+        $totalQ = DB::table('customers')
+            ->leftJoin('customer_addresses', 'customers.id', '=', 'customer_addresses.customer_id');
+
+        if ($request->filled('city')) {
+            $totalQ->where('customer_addresses.city', $request->query('city'));
+        }
+
+        if ($request->filled('state')) {
+            $totalQ->where('customer_addresses.state', $request->query('state'));
+        }
+
+        $total = $totalQ->distinct()->count('customers.id');
+
+        $clientes = $qb->offset($offset)->limit($limit)->get();
+
+        return response()->json([
+            'data' => $clientes,
+            'meta' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => $total,
+            ],
+        ], 200);
     }
 }
